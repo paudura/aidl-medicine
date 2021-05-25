@@ -6,4 +6,3 @@ def install(name):
 
 install("pandas")
 
-install('numpy')
