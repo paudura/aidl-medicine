@@ -60,8 +60,8 @@ def initial_dataframe():
         return(image_bbox_df)
 
 
-dd = initial_dataframe()
-print(dd.head(n =10))
-print(dd.columns)
-print(dd.shape)
+#dd = initial_dataframe()
+#print(dd.head(n =10))
+#print(dd.columns)
+#print(dd.shape)
 
