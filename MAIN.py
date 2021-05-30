@@ -18,7 +18,7 @@ print(cfg.evaluation)
 # Data transformation / data preparation
 
 
-# Train / Validation splitvdvvfvfb
+# Train / Validation split
 
 
 # Train model/s 
