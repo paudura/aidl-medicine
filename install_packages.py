@@ -5,5 +5,15 @@ def install(name):
 
 
 install("pandas")
-
 install('numpy')
+install("scikit-image")
+install("torchvision")
+install("pydicom")
+install("sklearn")
+install("segmentation-models-pytorch")
+
+
+#import segmentation_models_pytorch as smp
+
+#model=smp.Unet()
+#print(model)

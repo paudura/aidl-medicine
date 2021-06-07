@@ -37,7 +37,7 @@ def pneumonia_locations():
     return(pneumonia_locations)
 
 
-def initial_dataframe():
+def train_dataframe():
         det_class_path = '/home/medicine_project/input_data/stage_2_detailed_class_info.csv'
         bbox_path = '/home/medicine_project/input_data/stage_2_train_labels.csv'
         dicom_dir = '/home/medicine_project/input_data/stage_2_train_images/'
@@ -59,9 +59,18 @@ def initial_dataframe():
         print(image_bbox_df.shape[0], 'image bounding boxes')
         return(image_bbox_df)
 
+def test_dataframe():
+        dicom_dir = '/home/medicine_project/input_data/stage_2_test_images/'
+        image_df = pd.DataFrame({'path': glob(os.path.join(dicom_dir, '*.dcm'))})
+        image_df['patientId'] = image_df['path'].map(lambda x: os.path.splitext(os.path.basename(x))[0])
+        print(image_df.shape[0], 'images found')
+        return(image_df)
+
 
 #dd = initial_dataframe()
 #print(dd.head(n =10))
 #print(dd.columns)
 #print(dd.shape)
+
+
 
