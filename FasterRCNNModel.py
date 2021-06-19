@@ -31,7 +31,6 @@ pneumonia_testloader = torch.utils.data.DataLoader(pneumonia_test_dataset, batch
 
 #FasterRCNNModel
 
-
 if not torch.cuda.is_available():
     raise RuntimeError("You should enable GPU runtime.")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
