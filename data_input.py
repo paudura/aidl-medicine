@@ -12,6 +12,7 @@ import numpy as np
 import copy
 import random
 torch.device("cuda" if torch.cuda.is_available() else "cpu")
+import matplotlib.pyplot as plt
 
 ################
 ## INPUT DATA ##
@@ -60,7 +61,7 @@ def train_dataframe():
         box_pat_ids = set(comb_box_df['patientId'].values.tolist())
         # check to make sure there is no funny business
         #assert img_pat_ids.union(box_pat_ids)==img_pat_ids, "Patient IDs should be the same"
-        image_bbox_df = pd.merge(comb_box_df, image_df, on='patientId', how='left').sort_values('patientId')
+        image_bbox_df = pd.merge(comb_box_df, image_df, on='patientId', how='left').sort_values('patientId').reset_index(drop = True)
         #print(image_bbox_df.shape[0], 'image bounding boxes')
         #print(sum(image_bbox_df["path"].isna()))
         return(image_bbox_df)
@@ -113,7 +114,7 @@ class pneumoniaDataset(object):
     def __getitem__(self, idx, device = "cpu"):
         # load images
         img_path = self.imgs[idx]
-        ds = pydicom.read_file(img_path) #no llegeix 
+        ds = pydicom.read_file(img_path)
         image = ds.pixel_array
         # If grayscale. Convert to RGB for consistency.
         if len(image.shape) != 3 or image.shape[2] != 3:
@@ -131,11 +132,8 @@ class pneumoniaDataset(object):
             px = []
             py = []
         else:
-            px = [x, x - width/2, x + width/2]
-            py = [y, y - heigth/2, y + heigth/2]
-
-        poly = [(x + 0.5, y + 0.5) for x, y in zip(px, py)] #not necessary
-        poly = [p for x in poly for p in x]
+            px = [x, x + width]
+            py = [y, y + heigth]
             
         if np.isnan(x):
             boxes.append([])
@@ -173,5 +171,31 @@ class pneumoniaDataset(object):
 
 #pneumonia_trainloader = torch.utils.data.DataLoader(pneumonia_train_dataset, batch_size=4, num_workers=0,collate_fn=collate_fn)
 #pneumonia_testloader = torch.utils.data.DataLoader(pneumonia_test_dataset, batch_size=1, num_workers=0, collate_fn=collate_fn)
+import pydicom as dcm
+from matplotlib.patches import Rectangle
 
+def show_dicom_images_with_boxes(dd):
+    f, ax = plt.subplots(2,2, figsize=(16,18))
+    for i  in range(dd.shape[0]):
+        patientImage = dd.loc[i, 'patientId']+'.dcm'
+        imagePath = os.path.join("/home/medicine_project/input_data/stage_2_train_images/",patientImage)
+        data_row_img_data = dcm.read_file(imagePath)
+        modality = data_row_img_data.Modality
+        age = data_row_img_data.PatientAge
+        sex = data_row_img_data.PatientSex
+        data_row_img = dcm.dcmread(imagePath)
+        ax[i//3, i%3].imshow(data_row_img.pixel_array, cmap=plt.cm.bone) 
+        ax[i//3, i%3].axis('off')
+        ax[i//3, i%3].set_title('ID: {}\nModality: {} Age: {} Sex: {} Target: {}\nClass: {}'.format(
+                dd.loc[i, 'patientId'],modality, age, sex, dd.loc[i, 'Target'], dd.loc[i, 'class']))
+        
 
+        ax[i//3, i%3].add_patch(Rectangle(xy=(dd.loc[i, "x"], dd.loc[i, "y"]),
+                    width=dd.loc[i, "width"],height=dd.loc[i, "height"], 
+                    color="yellow",alpha = 0.1))  
+
+        circle1 = plt.Circle((dd.loc[i, "x"], dd.loc[i, "y"]), 0.5, color='r')
+
+        ax[i//3, i%3].add_patch(circle1)
+        plt.show()
+        plt.savefig('books_read.png')
