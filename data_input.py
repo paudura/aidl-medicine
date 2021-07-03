@@ -13,38 +13,12 @@ import copy
 import random
 torch.device("cuda" if torch.cuda.is_available() else "cpu")
 import matplotlib.pyplot as plt
+import pydicom as dcm
+from matplotlib.patches import Rectangle
 
 ################
 ## INPUT DATA ##
 ################
-
-def pneumonia_locations():
-    # empty dictionary
-    pneumonia_locations = {}
-    # load table
-    with open(os.path.join('/home/medicine_project/input_data/stage_2_train_labels.csv'), mode='r') as infile:
-        # open reader
-        reader = csv.reader(infile)
-        # skip header
-        next(reader, None)
-        # loop through rows
-        for rows in reader:
-            # retrieve information
-            filename = rows[0]
-            location = rows[1:5]
-            pneumonia = rows[5]
-            # if row contains pneumonia add label to dictionary
-            # which contains a list of pneumonia locations per filename
-        if pneumonia == '1':
-            # convert string to float to int
-            location = [int(float(i)) for i in location]
-            # save pneumonia location in dictionary
-            if filename in pneumonia_locations:
-                pneumonia_locations[filename].append(location)
-            else:
-                pneumonia_locations[filename] = [location]
-    return(pneumonia_locations)
-
 
 def train_dataframe():
         det_class_path = '/home/medicine_project/input_data/stage_2_detailed_class_info.csv'
@@ -72,13 +46,6 @@ def test_dataframe():
         image_df['patientId'] = image_df['path'].map(lambda x: os.path.splitext(os.path.basename(x))[0])
         print(image_df.shape[0], 'images found')
         return(image_df)
-
-
-#dd = train_dataframe()
-#print(dd.head(n =10))
-#print(dd.columns)
-#print(dd.shape)
-
 
 
 class pneumoniaDataset(object):
@@ -156,24 +123,6 @@ class pneumoniaDataset(object):
     def __len__(self):
         return len(self.imgs)
 
-
-
-#pneumonia_train_dataset = pneumoniaDataset(train = True)
-#pneumonia_test_dataset = pneumoniaDataset(train = False)
-
-#def collate_fn(batch):
-#    images = []
-#    targets = []
-#    for i, t in batch:
-#        images.append(i)
-#        targets.append(t)
-#    return images, targets
-
-#pneumonia_trainloader = torch.utils.data.DataLoader(pneumonia_train_dataset, batch_size=4, num_workers=0,collate_fn=collate_fn)
-#pneumonia_testloader = torch.utils.data.DataLoader(pneumonia_test_dataset, batch_size=1, num_workers=0, collate_fn=collate_fn)
-import pydicom as dcm
-from matplotlib.patches import Rectangle
-
 def show_dicom_images_with_boxes(dd):
     f, ax = plt.subplots(2,2, figsize=(16,18))
     for i  in range(dd.shape[0]):
@@ -199,3 +148,26 @@ def show_dicom_images_with_boxes(dd):
         ax[i//3, i%3].add_patch(circle1)
         plt.show()
         plt.savefig('books_read.png')
+
+class data_input_prod():
+    def __init__(self, files_to_evaluate):
+        self.files_to_evaluate = files_to_evaluate
+        self.imgs = []
+        path0 = "/home/medicine_project/input_data_production/"
+        for k in self.files_to_evaluate:
+            filename = path0 + k
+            self.imgs.append(filename)
+
+    def __getitem__(self, idx, device = "cpu"):
+        img_path = self.imgs[idx]
+        ds = pydicom.read_file(img_path)
+        image = ds.pixel_array
+        if len(image.shape) != 3 or image.shape[2] != 3:
+            image = np.stack((image,) * 3, -1)
+        image = to_tensor(image).to(device)
+        return image
+
+    def __len__(self):
+        return len(self.imgs)
+
+
