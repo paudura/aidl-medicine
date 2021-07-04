@@ -47,7 +47,7 @@ model.load_state_dict(torch.load("/home/medicine_project/output_data/MODEL"))
 model = model.eval()
 
 for i,sample in enumerate(pneumonia_testloader):
-    print(i)
+    #print(i)
     images =sample
     with torch.no_grad():
         loss_dict = model(images, targets = None)
@@ -81,16 +81,10 @@ for i,sample in enumerate(pneumonia_testloader):
     im = im.save(new_folder + "diagnosis.png")
     # After this, we can move the photo to a new side
     dest = shutil.move("/home/medicine_project/input_data_production/" + files_to_evaluate[i],
-    new_folder + "initial_image.doc")
-
-
-
-
-
-os.system("gsutil cp /home/medicine_project/output_production/foto1/diagnosis.png gs://medicine-data-bucket/production/output/")
-
-
-os.system('sudo gsutil cp -r /home/medicine_project/output_production/foto1/* gs://medicine-data-bucket/production/output/')
+    new_folder + "initial_image.dcm")
+    os.system('sudo gsutil cp -r ' + new_folder + '* gs://medicine-data-bucket/production/output/' + name_image)
+    # Move from input to processed
+    os.system("sudo gsutil mv gs://medicine-data-bucket/production/input/" + name_image + ".dcm gs://medicine-data-bucket/production/processed/" + name_image + ".dcm")
 
 
 
