@@ -147,7 +147,6 @@ class pneumoniaDataset(object):
     def __len__(self):
         return len(self.imgs)
 
-
 class data_input_prod():
     def __init__(self, files_to_evaluate):
         self.files_to_evaluate = files_to_evaluate
@@ -168,8 +167,6 @@ class data_input_prod():
 
     def __len__(self):
         return len(self.imgs)
-
-
 
 class data_input_classification():
     def __init__(self, files_to_evaluate):
