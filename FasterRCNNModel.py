@@ -89,11 +89,11 @@ plt.savefig('/home/medicine_project/output_data/TRAIN_vs_VALIDATION.png')
 model.load_state_dict(torch.load("/home/medicine_project/output_data/MODEL"))
 #model.load_state_dict(torch.load("/home/medicine_project/output_data/MODEL_MULTI"))
 model = model.eval()
-initial=0.1
+initial=0.10
 fila=0
 tresholdframe=[]
 tresholdframe=pd.DataFrame(tresholdframe)
-while initial<=1:
+while initial<=0.5:
     media_ious=[]
     for i,sample in enumerate(pneumonia_testloader):
         print(i)
@@ -123,6 +123,8 @@ while initial<=1:
         # Metric
         #boxes_max = boxes[scores == scores_max]
         ious=[]
+        #boxes = boxes[0:len(targets[0]["boxes"])]
+        #scores = scores[0:len(targets[0]["boxes"])]
         for box,score in zip(boxes,scores):
             if (score >= score_threshold):
                 maximum=[]
@@ -149,7 +151,7 @@ while initial<=1:
     tresholdframe.loc[fila,'Treshold']=score_threshold
     tresholdframe.loc[fila,'Eval']=(sum(media_ious)/len(media_ious))
     fila=fila+1
-    initial=initial+0.1
+    initial=initial+0.05
     
 
 
@@ -159,6 +161,3 @@ tresholdframe
 
 
 
-
-
-# %%
