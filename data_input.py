@@ -191,7 +191,7 @@ class data_input_classification():
 
 
 class pneumoniaDataset_new(object):
-    def __init__(self, train = True, validation = False, number_validation = 20, number_test = 50, device = "cpu"):
+    def __init__(self, train = True, validation = False, number_validation = 50, number_test = 40, device = "cpu"):
         # load all image files, sorting them to
         # ensure that they are aligned
         self.train = train
@@ -203,18 +203,20 @@ class pneumoniaDataset_new(object):
         dd.reset_index(drop = True, inplace = True)
         dd = dd.loc[dd["Target"] == 1, :]
         dd.reset_index(drop = True, inplace = True)
+        dd = dd.loc[:600, :]
+        dd.reset_index(drop = True, inplace = True)
         #random.shuffle(dd        
 
         if self.train:
-            dd = dd.loc[(number_validation + number_test):]
+            dd = dd.loc[(self.number_validation + self.number_test):]
             dd.reset_index(drop = True, inplace = True)
 
         elif self.validation:
-            dd = dd.loc[: number_validation]
+            dd = dd.loc[: self.number_validation]
             dd.reset_index(drop = True, inplace = True)
         else:
             # create validation dataset
-            dd2 = dd.loc[number_validation : (number_validation + number_test)]
+            dd = dd.loc[self.number_validation : (self.number_validation + self.number_test)]
             dd.reset_index(drop = True, inplace = True)
 
         self.imgs = []

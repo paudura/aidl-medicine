@@ -40,7 +40,9 @@ dd = dd.loc[~dd['path'].isna(),:]
 dd.reset_index(drop = True, inplace = True)
 dd = dd.loc[~dd['Target'].isna(),:]
 dd.reset_index(drop = True, inplace = True)
-cfg.score_threshold
+dd = dd.loc[:200,]
+dd.reset_index(drop = True, inplace = True)
+
 TP = 0
 TN = 0
 FP = 0
@@ -58,41 +60,57 @@ model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
 model.load_state_dict(torch.load("/home/medicine_project/output_data/MODEL"))
 model = model.eval()
 
-for q,sample in enumerate(pneumonia_testloader):
-    #print(q)
-    images = sample
-    with torch.no_grad():
-        loss_dict = model(images, targets = None)
-    detections = loss_dict[0]
-    keep_idx = torchvision.ops.nms(detections["boxes"], detections["scores"], cfg.iou_threshold)
-    boxes = [b for q, b in enumerate(detections["boxes"]) if q in keep_idx]
-    scores = [s for q, s in enumerate(detections["scores"]) if q in keep_idx]
-    labels = [l for q, l in enumerate(detections["labels"]) if q in keep_idx]
+d1 = {'thres':[], 'precision':[] , 'recall':[], 'accuracy':[]}
+matrix = pd.DataFrame(d1)
+
+scores_thres = [0.1, 0.2, 0.3, 0.4, 0.5]
+fila = 0
+for t in scores_thres:
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+    for q,sample in enumerate(pneumonia_testloader):
+        #print(q)
+        images = sample
+        with torch.no_grad():
+            loss_dict = model(images, targets = None)
+        detections = loss_dict[0]
+        keep_idx = torchvision.ops.nms(detections["boxes"], detections["scores"], cfg.iou_threshold)
+        boxes = [b for q, b in enumerate(detections["boxes"]) if q in keep_idx]
+        scores = [s for q, s in enumerate(detections["scores"]) if q in keep_idx]
+        labels = [l for q, l in enumerate(detections["labels"]) if q in keep_idx]
     #scores_max=max(scores)
-    try:
-        if max(scores) > cfg.score_threshold: 
-            test = 1
-        else:
+        try:
+            if max(scores) > t: 
+                test = 1
+            else:
+                test = 0
+        except:
             test = 0
-    except:
-        test = 0
-    #  values
-    if (test == 1) & (dd.loc[q, "Target"] == 0):
-        FP = FP + 1
-    elif (test == 1) & (dd.loc[q, "Target"] == 1):
-        TP = TP + 1
-    elif (test == 0) & (dd.loc[q, "Target"] == 0):
-            TN = TN + 1
-    elif (test == 0) & (dd.loc[q, "Target"] == 1):
-            FN = FN + 1
+        #  values
+        if (test == 1) & (dd.loc[q, "Target"] == 0):
+            FP = FP + 1
+        elif (test == 1) & (dd.loc[q, "Target"] == 1):
+            TP = TP + 1
+        elif (test == 0) & (dd.loc[q, "Target"] == 0):
+                TN = TN + 1
+        elif (test == 0) & (dd.loc[q, "Target"] == 1):
+                FN = FN + 1
         
-    if q % 1000 == 0: 
-        print(str(q) + " rows (", str(round(q/dd.shape[0]*100, 2)) + "%)")
+        if q % 20 == 0: 
+            print(str(q) + " rows (", str(round(q/dd.shape[0]*100, 2)) + "%)")
 
 
-RECALL = TP / (TP + FN)
-PRECISION = TP / (TP + FP)
-ACCURACY = (TP + TN) / (TP + FP + TN + FN)
+    RECALL = TP / (TP + FN)
+    PRECISION = TP / (TP + FP)
+    ACCURACY = (TP + TN) / (TP + FP + TN + FN)
+
+    matrix.loc[fila, "thres"] = t
+    matrix.loc[fila, "precision"] = PRECISION
+    matrix.loc[fila, "recall"] = RECALL
+    matrix.loc[fila, "accuracy"] = ACCURACY
+    fila = fila + 1
     
 
     

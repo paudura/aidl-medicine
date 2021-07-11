@@ -36,8 +36,8 @@ if len(files_to_evaluate) > 0:
     pneumonia_evaluation = data_input.data_input_prod(files_to_evaluate)
     pneumonia_testloader = torch.utils.data.DataLoader(pneumonia_evaluation, batch_size=1, num_workers=0, collate_fn=auxiliar.collate_fn_prod)
 
-    if not torch.cuda.is_available():
-        raise RuntimeError("You should enable GPU runtime.")
+    #if not torch.cuda.is_available():
+    #    raise RuntimeError("You should enable GPU runtime.")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained = True, min_size = 1024)

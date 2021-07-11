@@ -17,13 +17,13 @@ import data_input as data_input
 from matplotlib import pyplot as plt
 
 # Loading data
-pneumonia_train_dataset = data_input.pneumoniaDataset_new(train = True, number_validation = 50, number_test = 20)
-pneumonia_validation_dataset = data_input.pneumoniaDataset_new(train = False, validation = True,  number_validation = 50, number_test = 20)
-pneumonia_test_dataset = data_input.pneumoniaDataset_new(train = False, validation = False,  number_validation = 50, number_test = 20)
+pneumonia_train_dataset = data_input.pneumoniaDataset_new(train = True, number_validation = 50, number_test = 40)
+pneumonia_validation_dataset = data_input.pneumoniaDataset_new(train = False, validation = True,  number_validation = 50, number_test = 40)
+pneumonia_test_dataset = data_input.pneumoniaDataset_new(train = False, validation = False,  number_validation = 10, number_test = 40)
 
 # Building data loaders
 pneumonia_trainloader = torch.utils.data.DataLoader(pneumonia_train_dataset, batch_size= 10, num_workers=0,collate_fn=auxiliar.collate_fn)
-pneumonia_validloader = torch.utils.data.DataLoader(pneumonia_validation_dataset, batch_size= 1, num_workers=0,collate_fn=auxiliar.collate_fn)
+pneumonia_validloader = torch.utils.data.DataLoader(pneumonia_validation_dataset, batch_size= 5, num_workers=0,collate_fn=auxiliar.collate_fn)
 pneumonia_testloader = torch.utils.data.DataLoader(pneumonia_test_dataset, batch_size=1, num_workers=0, collate_fn=auxiliar.collate_fn)
 
 
@@ -33,7 +33,7 @@ if not torch.cuda.is_available():
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained = True, min_size = 1024)
-epochs=50
+epochs=20
 num_classes = 2
 in_features = model.roi_heads.box_predictor.cls_score.in_features
 model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
@@ -42,9 +42,9 @@ optimizer = optim.Adam(model.parameters(), weight_decay=0.0001)
 
 p=[]
 valid_loss_final = []
+model.train()
 for i in range(epochs):
     # Model training
-    model.train()
     for batch_idx, sample in enumerate(pneumonia_trainloader):
         #print(batch_idx)
         images, targets = sample[0], sample[1]
@@ -57,17 +57,17 @@ for i in range(epochs):
             loss_dict_printable = {k: f"{v.item():.2f}" for k, v in loss_dict.items()}
             print(f"[{batch_idx}/{len(pneumonia_trainloader)}] loss: {loss_dict_printable}")
         #Save model
-    p.append(loss_dict_printable)
+    p.append(float(loss_dict_printable["loss_box_reg"]))
     torch.save(model.state_dict(), "/home/medicine_project/output_data/MODEL_"+str(i))
     # validation evaluation
     valid_loss_aux = []
     for batch_idx, sample in enumerate(pneumonia_validloader):
-        print(batch_idx)
+        #print(batch_idx)
         images, targets = sample[0], sample[1]
-        optimizer.zero_grad()
-        loss_dict = model(images, targets)
-        loss = sum(loss for loss in loss_dict.values())
-        valid_loss_aux.append(loss)
+        #optimizer.zero_grad()
+        loss_val = model(images, targets)
+        loss_validation = loss_val["loss_box_reg"]
+        valid_loss_aux.append(loss_validation)
     valid_loss_final.append(sum(valid_loss_aux) / len(valid_loss_aux))
 
 
@@ -87,7 +87,7 @@ plt.savefig('/home/medicine_project/output_data/TRAIN_vs_VALIDATION.png')
 
 # Load model
 model.load_state_dict(torch.load("/home/medicine_project/output_data/MODEL"))
-model.load_state_dict(torch.load("/home/medicine_project/output_data/MODEL_MULTI"))
+#model.load_state_dict(torch.load("/home/medicine_project/output_data/MODEL_MULTI"))
 model = model.eval()
 initial=0.1
 fila=0
@@ -119,7 +119,7 @@ while initial<=1:
                 draw.rectangle(coords,width=5, outline = "red")
                 text = f"{'score:'} {score*100:.2f}%"
                 draw.text([coords[0], coords[1]-15], text, fill = "orange")
-        im = im.save("/home/medicine_project/output_data/prediction_test.png")
+        im = im.save("/home/medicine_project/output_data/prediction_" + str(i) +".png")
         # Metric
         #boxes_max = boxes[scores == scores_max]
         ious=[]
@@ -135,7 +135,7 @@ while initial<=1:
             media_ious.append(sum(ious)/len(targets[0]['boxes']))
         else:
             media_ious.append(sum(ious)/len(ious))
-        print (media_ious)
+        #print (media_ious)
 
 
         #draw.rectangle(coords,width=5, outline = "red")
@@ -154,7 +154,6 @@ while initial<=1:
 
 
 tresholdframe
-
 
 
 
