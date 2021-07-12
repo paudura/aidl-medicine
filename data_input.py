@@ -67,85 +67,6 @@ def test_dataframe():
         return(image_df)
 
 
-class pneumoniaDataset(object):
-    def __init__(self, train = True, number_validation = 20, device = "cpu"):
-        # load all image files, sorting them to
-        # ensure that they are aligned
-        self.train = train
-        self.number_validation = number_validation
-        dd, parametros = train_dataframe()
-        dd = dd.loc[~dd['path'].isna(),:]
-        dd.reset_index(drop = True, inplace = True)
-        dd = dd.loc[dd["Target"] == 1, :]
-        dd.reset_index(drop = True, inplace = True)
-        #random.shuffle(dd        
-
-        if self.train:
-            dd = dd.loc[number_validation:]
-            dd.reset_index(drop = True, inplace = True)
-        else:
-            # create validation dataset
-            dd = dd.loc[:number_validation]
-            dd.reset_index(drop = True, inplace = True)
-
-        self.imgs = []
-        self.annotations = []
-
-        for i in range(dd.shape[0]):
-            filename = dd.loc[i, "path"] 
-            self.imgs.append(filename)
-            self.annotations.append(parametros[dd.loc[i, "patientId"]])
-
-
-    def __getitem__(self, idx, device = "cpu"):
-        # load images
-        img_path = self.imgs[idx]
-        ds = pydicom.read_file(img_path)
-        image = ds.pixel_array
-        # If grayscale. Convert to RGB for consistency.
-        if len(image.shape) != 3 or image.shape[2] != 3:
-            image = np.stack((image,) * 3, -1)
-
-        # get bounding box coordinates for each mask
-        boxes = []
-
-        for q in range(len(self.annotations[idx]["x"])):
-            
-            #for _, annotation in self.annotations[idx]:
-            x = self.annotations[idx]["x"][q]
-            y = self.annotations[idx]["y"][q]
-            width = self.annotations[idx]["width"][q]
-            heigth = self.annotations[idx]["height"][q]
-            
-            if np.isnan(x):
-                px = []
-                py = []
-            else:
-                px = [x, x + width]
-                py = [y, y + heigth]
-            
-            if np.isnan(x):
-                boxes.append([])
-            else:
-                boxes.append([min(px), min(py), max(px), max(py)]) 
-
-            
-        #select the corners of the boxes for each axis. it should be a list with 4 values: 2 coordinates.
-        # convert everything into a torch.Tensor
-        boxes = torch.as_tensor(boxes, dtype=torch.float32, device = device)
-        # there is only one class
-        labels = torch.ones((len(boxes),), dtype=torch.int64, device = device)
-
-        target = {}
-        target["boxes"] = boxes
-        target["labels"] = labels
-
-        image = to_tensor(image).to(device)
-        
-        return image, target
-
-    def __len__(self):
-        return len(self.imgs)
 
 class data_input_prod():
     def __init__(self, files_to_evaluate):
@@ -203,8 +124,8 @@ class pneumoniaDataset_new(object):
         dd.reset_index(drop = True, inplace = True)
         dd = dd.loc[dd["Target"] == 1, :]
         dd.reset_index(drop = True, inplace = True)
-        dd = dd.loc[:600, :]
-        dd.reset_index(drop = True, inplace = True)
+        #dd = dd.loc[:600, :]
+        #dd.reset_index(drop = True, inplace = True)
         #random.shuffle(dd        
 
         if self.train:
