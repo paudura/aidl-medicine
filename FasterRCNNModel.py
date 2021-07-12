@@ -17,9 +17,9 @@ import data_input as data_input
 from matplotlib import pyplot as plt
 
 # Loading data
-pneumonia_train_dataset = data_input.pneumoniaDataset_new(train = True, number_validation = 2000, number_test = 1000)
-pneumonia_validation_dataset = data_input.pneumoniaDataset_new(train = False, validation = True,  number_validation = 2000, number_test = 1000)
-pneumonia_test_dataset = data_input.pneumoniaDataset_new(train = False, validation = False,  number_validation = 2000, number_test = 1000)
+pneumonia_train_dataset = data_input.pneumoniaDataset_new(train = True, number_validation = 1000, number_test = 1000)
+pneumonia_validation_dataset = data_input.pneumoniaDataset_new(train = False, validation = True,  number_validation = 1000, number_test = 1000)
+pneumonia_test_dataset = data_input.pneumoniaDataset_new(train = False, validation = False,  number_validation = 1000, number_test = 1000)
 
 # Building data loaders
 pneumonia_trainloader = torch.utils.data.DataLoader(pneumonia_train_dataset, batch_size= 200, num_workers=0,collate_fn=auxiliar.collate_fn)
